@@ -14,13 +14,11 @@ class BackboneView(View):
         read ->   GET    /collection[/id]
         update -> PUT    /collection/id
         delete -> DELETE /collection/id
-
-    Assumptions:
-        - Your model has an integer primary key named 'id'
-        - Your model has a Manager at Mymodel.objects
     """
-    model = None
-    serialize_fields = tuple()
+    base_queryset = None        # Queryset to use for all data accesses, eg. User.objects.all()
+    add_form_class = None       # Form class to be used for POST requests
+    edit_form_class = None      # Form class to be used for PUT requests
+    serialize_fields = tuple()  # Tuple of field names that should appear in json output
 
     def get(self, request, *args, **kwargs):
         """
@@ -36,7 +34,7 @@ class BackboneView(View):
         Handle a GET request for a single model instance.
         """
         try:
-            qs = self.model.objects.filter(id=kwargs['id'])
+            qs = self.base_queryset.filter(id=kwargs['id'])
             assert len(qs) == 1
         except AssertionError:
             raise Http404
@@ -47,7 +45,7 @@ class BackboneView(View):
         """
         Handle a GET request for a full collection (when no id was provided).
         """
-        qs = self.model.objects.all()
+        qs = self.base_queryset
         output = self.serialize_qs(qs)
         return self.build_response(output)
 
@@ -75,10 +73,9 @@ class BackboneView(View):
 
     def build_response(self, output):
         """
-        Convert json to an HttpResponse object, with the correct mimetype
+        Convert json output to an HttpResponse object, with the correct mimetype.
         """
         return HttpResponse(output, mimetype='application/json')
-
 
     @staticmethod
     def date_serializer(obj):

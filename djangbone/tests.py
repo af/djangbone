@@ -11,7 +11,7 @@ class MyView(BackboneView):
     """
     The subclass used to test BackboneView.
     """
-    model = User
+    base_queryset = User.objects.all()
     serialize_fields = ('id', 'username', 'first_name', 'last_name')
 
 
