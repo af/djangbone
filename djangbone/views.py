@@ -1,5 +1,5 @@
 from datetime import datetime
-import json     #FIXME: fallback to simplejson if json not available
+import json
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse, Http404
@@ -70,7 +70,12 @@ class BackboneView(View):
         form = self.add_form_class(request_dict)
         if form.is_valid():
             new_object = form.save()
-        return HttpResponse('OK')   #FIXME: send json of new model
+            # Serialize the new object to json using our built-in methods.
+            # The extra DB read here is not ideal, but it keeps the code DRY:
+            wrapper_qs = self.base_queryset.filter(id=new_object.id)
+            return self.build_response(self.serialize_qs(wrapper_qs, single_object=True))
+        else:
+            return HttpResponse('ERROR: validation failed')
 
     def put(self, request, *args, **kwargs):
         """
@@ -109,12 +114,15 @@ class BackboneView(View):
         else:
             raise Http404
 
-    def serialize_qs(self, queryset):
+    def serialize_qs(self, queryset, single_object=False):
         """
         Serialize a queryset into a JSON object that can be consumed by backbone.js.
+
+        If the single_object argument is True, or the url specified an id, return a
+        single JSON object, otherwise return a JSON array of objects.
         """
         values = queryset.values(*self.serialize_fields)
-        if self.kwargs.get('id'):
+        if single_object or self.kwargs.get('id'):
             # For single-item requests, convert ValuesQueryset to a dict simply
             # by slicing the first item:
             json_output = json.dumps(values[0], default=BackboneView.date_serializer)

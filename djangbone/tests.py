@@ -111,6 +111,8 @@ class ViewTest(unittest.TestCase):
         response = self.writable_view(request)
         self.assertEqual(response.status_code, 200)
         self.assert_(User.objects.get(username='post_test'))
+        response_json = json.loads(response.content)
+        self.assertEqual(response_json['username'], 'post_test')
 
     def test_put(self):
         request = self.factory.put('/users/1')
