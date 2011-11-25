@@ -40,7 +40,7 @@ class BackboneView(View):
         except AssertionError:
             raise Http404
         output = self.serialize_qs(qs)
-        return self.build_response(output)
+        return self.success_response(output)
 
     def get_collection(self, request, *args, **kwargs):
         """
@@ -48,7 +48,7 @@ class BackboneView(View):
         """
         qs = self.base_queryset
         output = self.serialize_qs(qs)
-        return self.build_response(output)
+        return self.success_response(output)
 
     def post(self, request, *args, **kwargs):
         """
@@ -73,9 +73,9 @@ class BackboneView(View):
             # Serialize the new object to json using our built-in methods.
             # The extra DB read here is not ideal, but it keeps the code DRY:
             wrapper_qs = self.base_queryset.filter(id=new_object.id)
-            return self.build_response(self.serialize_qs(wrapper_qs, single_object=True))
+            return self.success_response(self.serialize_qs(wrapper_qs, single_object=True))
         else:
-            return HttpResponse('ERROR: validation failed')
+            return self.validation_error_response(form.errors)
 
     def put(self, request, *args, **kwargs):
         """
@@ -98,7 +98,11 @@ class BackboneView(View):
         form = self.edit_form_class(request_dict, instance=instance)
         if form.is_valid():
             item = form.save()
-        return HttpResponse('TODO: proper PUT output')
+            # TODO: only return the fields that were modified in the json response.
+            wrapper_qs = self.base_queryset.filter(id=item.id)
+            return self.success_response(self.serialize_qs(wrapper_qs, single_object=True))
+        else:
+            return self.validation_error_response(form.errors)
 
     def delete(self, request, *args, **kwargs):
         """
@@ -110,7 +114,7 @@ class BackboneView(View):
         if qs:
             output = self.serialize_qs(qs)
             qs.delete()
-            return self.build_response(output)
+            return self.success_response(output)
         else:
             raise Http404
 
@@ -130,11 +134,21 @@ class BackboneView(View):
             json_output = json.dumps(list(values), default=BackboneView.date_serializer)
         return json_output
 
-    def build_response(self, output):
+    def success_response(self, output):
         """
         Convert json output to an HttpResponse object, with the correct mimetype.
         """
         return HttpResponse(output, mimetype='application/json')
+
+    def validation_error_response(self, form_errors):
+        """
+        Return an HttpResponse indicating that input validation failed.
+
+        The form_errors argument contains the contents of form.errors, and you
+        can override this is you want to use a specific error response format.
+        The default output is a simple text response.
+        """
+        return HttpResponse('ERROR: validation failed')
 
     @staticmethod
     def date_serializer(obj):

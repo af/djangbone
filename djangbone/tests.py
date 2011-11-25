@@ -137,6 +137,8 @@ class ViewTest(unittest.TestCase):
         response = self.writable_view(request, id='1')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(User.objects.get(id=1).username, 'put_test')
+        response_json = json.loads(response.content)
+        self.assertEqual(response_json['username'], 'put_test')
 
     def test_delete(self):
         # Delete is not supported for collections:
