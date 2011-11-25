@@ -1,6 +1,7 @@
 from datetime import datetime
 import json     #FIXME: fallback to simplejson if json not available
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse, Http404
 from django.views.generic import View
 
@@ -60,20 +61,39 @@ class BackboneView(View):
         Backbone.js will send the new object's attributes as json in the request body,
         so use json.loads() to parse it, rather than looking at request.POST.
         """
-        if self.add_form_class != None:
-            try:
-                request_dict = json.loads(request.raw_post_data)
-            except ValueError:
-                return HttpResponse('Invalid POST JSON', status=400)
-            form = self.add_form_class(request_dict)
-            if form.is_valid():
-                new_object = form.save()
-            return HttpResponse('OK')   #FIXME: send json of new model
-        else:
+        if self.add_form_class == None:
             return HttpResponse('POST not supported', status=405)
+        try:
+            request_dict = json.loads(request.raw_post_data)
+        except ValueError:
+            return HttpResponse('Invalid POST JSON', status=400)
+        form = self.add_form_class(request_dict)
+        if form.is_valid():
+            new_object = form.save()
+        return HttpResponse('OK')   #FIXME: send json of new model
 
     def put(self, request, *args, **kwargs):
-        pass
+        """
+        Handle a PUT request by editing an existing model.
+
+        This view will only do something if BackboneView.edit_form_class is specified
+        by the subclass. This should be a ModelForm corresponding to the model used by
+        base_queryset.
+        """
+        if self.edit_form_class == None or not kwargs.has_key('id'):
+            return HttpResponse('PUT not supported', status=405)
+        try:
+            # Just like with POST requests, Backbone will send the object's data as json:
+            request_dict = json.loads(request.raw_post_data)
+            instance = self.base_queryset.get(id=kwargs['id'])
+        except ValueError:
+            return HttpResponse('Invalid PUT JSON', status=400)
+        except ObjectDoesNotExist:
+            raise Http404
+        form = self.edit_form_class(request_dict, instance=instance)
+        if form.is_valid():
+            item = form.save()
+        return HttpResponse('TODO: proper PUT output')
 
     def delete(self, request, *args, **kwargs):
         pass

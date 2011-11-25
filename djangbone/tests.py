@@ -111,3 +111,27 @@ class ViewTest(unittest.TestCase):
         response = self.writable_view(request)
         self.assertEqual(response.status_code, 200)
         self.assert_(User.objects.get(username='post_test'))
+
+    def test_put(self):
+        request = self.factory.put('/users/1')
+        response = self.view(request, id='1')
+        self.assertEqual(response.status_code, 405)     # "Method not supported" if no edit_form_class specified
+
+        # PUT is also not supported for collections (when no id is provided):
+        request = self.factory.put('/users')
+        response = self.writable_view(request)
+        self.assertEqual(response.status_code, 405)
+
+        # If no JSON in PUT body, return HTTP 400:
+        response = self.writable_view(request, id='1')
+        self.assertEqual(response.status_code, 400)
+
+        # Raise 404 if an object with the given id doesn't exist:
+        request = self.factory.put('/users/27', '{"username": "put_test"}', content_type='application/json')
+        self.assertRaises(Http404, lambda: self.writable_view(request, id='27'))
+
+        # If the object exists and an edit_form_class is supplied, it actually does something:
+        request = self.factory.put('/users/1', '{"username": "put_test"}', content_type='application/json')
+        response = self.writable_view(request, id='1')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(User.objects.get(id=1).username, 'put_test')
