@@ -1,4 +1,5 @@
 import json
+from django import forms
 from django.contrib.auth.models import User
 from django.http import Http404
 from django.test.client import RequestFactory
@@ -7,12 +8,39 @@ from django.utils import unittest
 from djangbone.views import BackboneView
 
 
-class MyView(BackboneView):
+class AddUserForm(forms.ModelForm):
     """
-    The subclass used to test BackboneView.
+    Simple ModelForm for testing POST requests.
+    """
+    class Meta:
+        model = User
+        fields = ('username', 'first_name', 'last_name')
+
+class EditUserForm(forms.ModelForm):
+    """
+    Simple ModelForm for testing PUT requests.
+    """
+    class Meta:
+        model = User
+        fields = ('username', 'first_name', 'last_name')
+
+
+class ReadOnlyView(BackboneView):
+    """
+    BackboneView subclass for testing read-only functionality.
     """
     base_queryset = User.objects.all()
     serialize_fields = ('id', 'username', 'first_name', 'last_name')
+
+class FullView(BackboneView):
+    """
+    The subclass used to test BackboneView's PUT/POST requests.
+    """
+    base_queryset = User.objects.all()
+    add_form_class = AddUserForm
+    edit_form_class = EditUserForm
+    serialize_fields = ('id', 'username', 'first_name', 'last_name')
+
 
 
 class ViewTest(unittest.TestCase):
@@ -23,7 +51,8 @@ class ViewTest(unittest.TestCase):
     """
     def setUp(self):
         self.factory = RequestFactory()
-        self.view = MyView.as_view()
+        self.view = ReadOnlyView.as_view()
+        self.writable_view = FullView.as_view()
         self.user1 = User.objects.create(username='test1', first_name='Test', last_name='One')
 
     def tearDown(self):
@@ -65,3 +94,20 @@ class ViewTest(unittest.TestCase):
         # Ensure 404s are raised for non-existent items:
         request = self.factory.get('/users/7')
         self.assertRaises(Http404, lambda: self.view(request, id='7'))
+
+    def test_post(self):
+        request = self.factory.post('/users')
+        response = self.view(request)
+        self.assertEqual(response.status_code, 405)     # "Method not supported" if no add_form_class specified
+
+        # Testing BackboneView subclasses that support POST via add_form_class:
+
+        # If no JSON provided in POST body, return HTTP 400:
+        response = self.writable_view(request)
+        self.assertEqual(response.status_code, 400)
+
+        # If valid JSON was provided, a new instance should be created:
+        request = self.factory.post('/users', '{"username": "post_test"}', content_type='application/json')
+        response = self.writable_view(request)
+        self.assertEqual(response.status_code, 200)
+        self.assert_(User.objects.get(username='post_test'))

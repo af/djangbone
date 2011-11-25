@@ -50,7 +50,27 @@ class BackboneView(View):
         return self.build_response(output)
 
     def post(self, request, *args, **kwargs):
-        pass
+        """
+        Handle a POST request by adding a new model instance.
+
+        This view will only do something if BackboneView.add_form_class is specified
+        by the subclass. This should be a ModelForm corresponding to the model used by
+        base_queryset.
+
+        Backbone.js will send the new object's attributes as json in the request body,
+        so use json.loads() to parse it, rather than looking at request.POST.
+        """
+        if self.add_form_class != None:
+            try:
+                request_dict = json.loads(request.raw_post_data)
+            except ValueError:
+                return HttpResponse('Invalid POST JSON', status=400)
+            form = self.add_form_class(request_dict)
+            if form.is_valid():
+                new_object = form.save()
+            return HttpResponse('OK')   #FIXME: send json of new model
+        else:
+            return HttpResponse('POST not supported', status=405)
 
     def put(self, request, *args, **kwargs):
         pass
