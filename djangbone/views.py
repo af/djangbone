@@ -96,7 +96,18 @@ class BackboneView(View):
         return HttpResponse('TODO: proper PUT output')
 
     def delete(self, request, *args, **kwargs):
-        pass
+        """
+        Respond to DELETE requests by deleting the model and returning its JSON representation.
+        """
+        if not kwargs.has_key('id'):
+            return HttpResponse('DELETE is not supported for collections', status=405)
+        qs = self.base_queryset.filter(id=kwargs['id'])
+        if qs:
+            output = self.serialize_qs(qs)
+            qs.delete()
+            return self.build_response(output)
+        else:
+            raise Http404
 
     def serialize_qs(self, queryset):
         """

@@ -135,3 +135,20 @@ class ViewTest(unittest.TestCase):
         response = self.writable_view(request, id='1')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(User.objects.get(id=1).username, 'put_test')
+
+    def test_delete(self):
+        # Delete is not supported for collections:
+        request = self.factory.delete('/users')
+        response = self.view(request)
+        self.assertEqual(response.status_code, 405)
+        self.assertEqual(User.objects.filter(id=1).count(), 1)
+
+        # But it is supported for single items (specified by id):
+        request = self.factory.delete('/users/1')
+        response = self.view(request, id='1')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(User.objects.filter(id=1).count(), 0)
+
+        # Should raise 404 if we try to access a deleted resource again:
+        request = self.factory.delete('/users/1')
+        self.assertRaises(Http404, lambda: self.view(request, id='1'))
