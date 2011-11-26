@@ -38,8 +38,39 @@ In myapp/urls.py::
     )
 
 If you want to run the djangbone tests, you'll need to add `"djangobone"` to your
-INSTALLED_APPS, and run `python manage.py test djangbone`.
+INSTALLED_APPS, and run `python manage.py test djangbone`. The tests use
+`django.contrib.auth`, so that app will also need to be in your INSTALLED_APPS
+for the tests to work.
 
+
+Customization
+-------------
+
+There's a decent chance that you'll want to wrap your BackboneView subclass
+with additional functionality, for example to only allow registered users to
+access this view. You can use django's method_decorator on BackboneView's
+dispatch() method to do this as follows::
+
+    from django.contrib.auth.decorators import login_required
+    from django.utils.decorators import method_decorator
+
+    class WidgetView(BackboneView):
+        ...
+
+        @method_decorator(login_required)
+        def dispatch(self, request, *args, **kwargs):
+            return super(WidgetView, self).dispatch(*args, **kwargs)
+
+
+You might also want to vary the base_queryset depending on the request (or an
+extra url parameter). You can also override dispatch() to do this, for example::
+
+    class WidgetView(BackboneView):
+        base_queryset = None
+
+        def dispatch(self, request, *args, **kwargs):
+            self.base_queryset = Widgets.objects.filter(owner=request.user)
+            return super(WidgetView, self).dispatch(*args, **kwargs)
 
 Assumptions
 -----------
