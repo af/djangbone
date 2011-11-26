@@ -98,7 +98,6 @@ class BackboneView(View):
         form = self.edit_form_class(request_dict, instance=instance)
         if form.is_valid():
             item = form.save()
-            # TODO: only return the fields that were modified in the json response.
             wrapper_qs = self.base_queryset.filter(id=item.id)
             return self.success_response(self.serialize_qs(wrapper_qs, single_object=True))
         else:
