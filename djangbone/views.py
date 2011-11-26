@@ -1,9 +1,22 @@
-from datetime import datetime
+import datetime
 import json
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse, Http404
 from django.views.generic import View
+
+
+class DjangboneJSONEncoder(json.JSONEncoder):
+    """
+    JSON encoder that converts additional Python types to JSON.
+
+    Currently only datetime.datetime instances are supported.
+    """
+    def default(self, obj):
+        """
+        Convert datetime objects to ISO-compatible strings during json serialization.
+        """
+        return obj.isoformat() if isinstance(obj, datetime.datetime) else None
 
 
 class BackboneView(View):
@@ -17,9 +30,15 @@ class BackboneView(View):
         delete -> DELETE /collection/id
     """
     base_queryset = None        # Queryset to use for all data accesses, eg. User.objects.all()
+    serialize_fields = tuple()  # Tuple of field names that should appear in json output
+
+    # Override these attributes with ModelForm instances to support PUT and POST requests:
     add_form_class = None       # Form class to be used for POST requests
     edit_form_class = None      # Form class to be used for PUT requests
-    serialize_fields = tuple()  # Tuple of field names that should appear in json output
+
+    # Override these if you have custom JSON encoding/decoding needs:
+    json_encoder = DjangboneJSONEncoder()
+    json_decoder = json.JSONDecoder()
 
     def get(self, request, *args, **kwargs):
         """
@@ -59,12 +78,12 @@ class BackboneView(View):
         base_queryset.
 
         Backbone.js will send the new object's attributes as json in the request body,
-        so use json.loads() to parse it, rather than looking at request.POST.
+        so use our json decoder on it, rather than looking at request.POST.
         """
         if self.add_form_class == None:
             return HttpResponse('POST not supported', status=405)
         try:
-            request_dict = json.loads(request.raw_post_data)
+            request_dict = self.json_decoder.decode(request.raw_post_data)
         except ValueError:
             return HttpResponse('Invalid POST JSON', status=400)
         form = self.add_form_class(request_dict)
@@ -89,7 +108,7 @@ class BackboneView(View):
             return HttpResponse('PUT not supported', status=405)
         try:
             # Just like with POST requests, Backbone will send the object's data as json:
-            request_dict = json.loads(request.raw_post_data)
+            request_dict = self.json_decoder.decode(request.raw_post_data)
             instance = self.base_queryset.get(id=kwargs['id'])
         except ValueError:
             return HttpResponse('Invalid PUT JSON', status=400)
@@ -128,9 +147,9 @@ class BackboneView(View):
         if single_object or self.kwargs.get('id'):
             # For single-item requests, convert ValuesQueryset to a dict simply
             # by slicing the first item:
-            json_output = json.dumps(values[0], default=BackboneView.date_serializer)
+            json_output = self.json_encoder.encode(values[0])
         else:
-            json_output = json.dumps(list(values), default=BackboneView.date_serializer)
+            json_output = self.json_encoder.encode(list(values))
         return json_output
 
     def success_response(self, output):
@@ -144,14 +163,7 @@ class BackboneView(View):
         Return an HttpResponse indicating that input validation failed.
 
         The form_errors argument contains the contents of form.errors, and you
-        can override this is you want to use a specific error response format.
-        The default output is a simple text response.
+        can override this method is you want to use a specific error response format.
+        By default, the output is a simple text response.
         """
         return HttpResponse('ERROR: validation failed')
-
-    @staticmethod
-    def date_serializer(obj):
-        """
-        Convert datetime objects to ISO-compatible strings during json serialization.
-        """
-        return obj.isoformat() if isinstance(obj, datetime.datetime) else None
