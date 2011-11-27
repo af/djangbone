@@ -87,6 +87,16 @@ a ``set_request()`` method to your form classes as follows::
         # Now you have access to self.request in clean() and save()
 
 
+Pagination
+----------
+
+If you want to limit the number of items returned for a collection, you can
+turn on basic pagination with BackboneView's ``page_size`` attribute. Set it to
+an integer and GETs without an ``id`` will be paginated. The default GET
+parameter is "p", but you can override this with
+``BackboneView.page_param_name``.
+
+
 Customization
 -------------
 

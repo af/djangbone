@@ -54,7 +54,7 @@ class FullView(BackboneView):
     add_form_class = AddUserForm
     edit_form_class = EditUserForm
     serialize_fields = ('id', 'username', 'first_name', 'last_name')
-
+    page_size = 2
 
 
 class ViewTest(unittest.TestCase):
@@ -96,6 +96,21 @@ class ViewTest(unittest.TestCase):
         self.assertEqual(len(response_data), 3)
         # With User model's default ordering (by id), user3 should be last:
         self.assertEqual(response_data[2]['username'], self.user3.username)
+
+        # Test pagination:
+        response = self.writable_view(request)
+        self.assertEqual(response.status_code, 200)
+        response_data = json.loads(response.content)
+        self.assert_(isinstance(response_data, list))
+        self.assertEqual(len(response_data), 2)
+
+        # Page 2 should only have one item:
+        request = self.factory.get('/users/?p=2')
+        response = self.writable_view(request)
+        self.assertEqual(response.status_code, 200)
+        response_data = json.loads(response.content)
+        self.assert_(isinstance(response_data, list))
+        self.assertEqual(len(response_data), 1)
 
     def test_single_item_get(self):
         request = self.factory.get('/users/1')

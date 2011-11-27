@@ -32,6 +32,10 @@ class BackboneView(View):
     base_queryset = None        # Queryset to use for all data accesses, eg. User.objects.all()
     serialize_fields = tuple()  # Tuple of field names that should appear in json output
 
+    # Optional pagination settings:
+    page_size = None            # Set to an integer to enable GET pagination (at the specified page size)
+    page_param_name = 'p'       # HTTP GET parameter to use for accessing pages (eg. /widgets?p=2)
+
     # Override these attributes with ModelForm instances to support PUT and POST requests:
     add_form_class = None       # Form class to be used for POST requests
     edit_form_class = None      # Form class to be used for PUT requests
@@ -153,6 +157,15 @@ class BackboneView(View):
             # by slicing the first item:
             json_output = self.json_encoder.encode(values[0])
         else:
+            values = queryset.values(*self.serialize_fields)
+            # Process pagination options if they are enabled:
+            if isinstance(self.page_size, int):
+                try:
+                    page_number = int(self.request.GET.get(self.page_param_name, 1))
+                    offset = (page_number - 1) * self.page_size
+                except ValueError:
+                    offset = 0
+                values = values[offset:offset+self.page_size]
             json_output = self.json_encoder.encode(list(values))
         return json_output
 
