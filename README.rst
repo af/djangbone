@@ -6,7 +6,7 @@ Djangbone is a small django app that makes it easy to work with `Backbone.js
 <http://backbonejs.org/>`_ frontends. More specifically, it allows you to
 quickly build a backend that works with the default Backbone.sync implementation.
 
-Djangbone provides one abstract class-based view (BackboneView), which gives you
+Djangbone provides one abstract class-based view (BackboneAPIView), which gives you
 hooks to customize it easily.
 
 
@@ -15,16 +15,16 @@ Example Usage
 
 After downloading/installing djangbone, all you need to do is:
 
-#. Subclass ``BackboneView``, and set the ``base_queryset`` and
+#. Subclass ``BackboneAPIView``, and set the ``base_queryset`` and
    ``serialize_fields`` attributes.
 #. Wire up the view subclass in your urlconf.
 
 In myapp/views.py::
 
     from myapp.models import Widget
-    from djangbone.views import BackboneView
+    from djangbone.views import BackboneAPIView
 
-    class WidgetView(BackboneView):
+    class WidgetView(BackboneAPIView):
         # base_queryset is a queryset that contains all the objects that are
         # accessible by the API:
         base_queryset = Widget.objects.all()
@@ -56,18 +56,18 @@ Backbone.sync uses POST requests when new objects are created, and PUT requests
 when objects are changed. If you want to support these HTTP methods, you need to
 specify which form classes to use for validation for each request type.
 
-To do this, give BackboneView should have ``add_form_class`` (POST) and
+To do this, give BackboneAPIView should have ``add_form_class`` (POST) and
 ``edit_form_class`` (PUT) attributes. Usually you'll want to use a ModelForm
 for both, but regardless, each form's save() method should return the model
 instance that was created or modified.
 
 Here's an example (assume AddWidgetForm and EditWidgetForm are both ModelForms)::
 
-    from djangbone.views import BackboneView
+    from djangbone.views import BackboneAPIView
     from myapp.models import Widget
     from myapp.forms import AddWidgetForm, EditWidgetForm
 
-    class WidgetView(BackboneView):
+    class WidgetView(BackboneAPIView):
         base_queryset = ...
         serialize_fields = ...
         add_form_class = AddWidgetForm      # Used for POST requests
@@ -91,24 +91,24 @@ Pagination
 ----------
 
 If you want to limit the number of items returned for a collection, you can
-turn on basic pagination with BackboneView's ``page_size`` attribute. Set it to
+turn on basic pagination with BackboneAPIView's ``page_size`` attribute. Set it to
 an integer and GETs without an ``id`` will be paginated. The default GET
 parameter is "p", but you can override this with
-``BackboneView.page_param_name``.
+``BackboneAPIView.page_param_name``.
 
 
 Customization
 -------------
 
-There's a decent chance that you'll want to wrap your BackboneView subclass
+There's a decent chance that you'll want to wrap your BackboneAPIView subclass
 with additional functionality, for example to only allow registered users to
-access this view. You can use django's method_decorator on BackboneView's
+access this view. You can use django's method_decorator on BackboneAPIView's
 dispatch() method to do this as follows::
 
     from django.contrib.auth.decorators import login_required
     from django.utils.decorators import method_decorator
 
-    class WidgetView(BackboneView):
+    class WidgetView(BackboneAPIView):
         ...
 
         @method_decorator(login_required)
@@ -119,7 +119,7 @@ dispatch() method to do this as follows::
 You might also want to vary the base_queryset depending on the request (or an
 extra url parameter). You can also override dispatch() to do this, for example::
 
-    class WidgetView(BackboneView):
+    class WidgetView(BackboneAPIView):
         base_queryset = Widgets.objects.all()
 
         def dispatch(self, request, *args, **kwargs):

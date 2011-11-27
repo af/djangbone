@@ -5,7 +5,7 @@ from django.http import Http404
 from django.test.client import RequestFactory
 from django.utils import unittest
 
-from djangbone.views import BackboneView
+from djangbone.views import BackboneAPIView
 
 
 class AddUserForm(forms.ModelForm):
@@ -39,16 +39,16 @@ class EditUserForm(forms.ModelForm):
         self.request = request
 
 
-class ReadOnlyView(BackboneView):
+class ReadOnlyView(BackboneAPIView):
     """
-    BackboneView subclass for testing read-only functionality.
+    BackboneAPIView subclass for testing read-only functionality.
     """
     base_queryset = User.objects.all()
     serialize_fields = ('id', 'username', 'first_name', 'last_name')
 
-class FullView(BackboneView):
+class FullView(BackboneAPIView):
     """
-    The subclass used to test BackboneView's PUT/POST requests.
+    The subclass used to test BackboneAPIView's PUT/POST requests.
     """
     base_queryset = User.objects.all()
     add_form_class = AddUserForm
@@ -59,7 +59,7 @@ class FullView(BackboneView):
 
 class ViewTest(unittest.TestCase):
     """
-    Tests for BackboneView.
+    Tests for BackboneAPIView.
 
     Note that django.contrib.auth must be in INSTALLED_APPS for these to work.
     """
@@ -129,7 +129,7 @@ class ViewTest(unittest.TestCase):
         response = self.view(request)
         self.assertEqual(response.status_code, 405)     # "Method not supported" if no add_form_class specified
 
-        # Testing BackboneView subclasses that support POST via add_form_class:
+        # Testing BackboneAPIView subclasses that support POST via add_form_class:
 
         # If no JSON provided in POST body, return HTTP 400:
         response = self.writable_view(request)

@@ -19,7 +19,7 @@ class DjangboneJSONEncoder(json.JSONEncoder):
         return obj.isoformat() if isinstance(obj, datetime.datetime) else None
 
 
-class BackboneView(View):
+class BackboneAPIView(View):
     """
     Abstract class view, which makes it easy for subclasses to talk to backbone.js.
 
@@ -77,7 +77,7 @@ class BackboneView(View):
         """
         Handle a POST request by adding a new model instance.
 
-        This view will only do something if BackboneView.add_form_class is specified
+        This view will only do something if BackboneAPIView.add_form_class is specified
         by the subclass. This should be a ModelForm corresponding to the model used by
         base_queryset.
 
@@ -106,7 +106,7 @@ class BackboneView(View):
         """
         Handle a PUT request by editing an existing model.
 
-        This view will only do something if BackboneView.edit_form_class is specified
+        This view will only do something if BackboneAPIView.edit_form_class is specified
         by the subclass. This should be a ModelForm corresponding to the model used by
         base_queryset.
         """
