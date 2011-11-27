@@ -87,6 +87,8 @@ class BackboneView(View):
         except ValueError:
             return HttpResponse('Invalid POST JSON', status=400)
         form = self.add_form_class(request_dict)
+        if hasattr(form, 'set_request'):
+            form.set_request(request)
         if form.is_valid():
             new_object = form.save()
             # Serialize the new object to json using our built-in methods.
@@ -115,6 +117,8 @@ class BackboneView(View):
         except ObjectDoesNotExist:
             raise Http404
         form = self.edit_form_class(request_dict, instance=instance)
+        if hasattr(form, 'set_request'):
+            form.set_request(request)
         if form.is_valid():
             item = form.save()
             wrapper_qs = self.base_queryset.filter(id=item.id)

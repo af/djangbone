@@ -24,8 +24,6 @@ In myapp/views.py::
     class WidgetView(BackboneView):
         base_queryset = Widget.objects.all()
         serialize_fields = ('id', 'name', 'description', 'created_at')
-        add_form_class = ...    # Specify this if you want to support POST requests
-        edit_form_class = ...   # Specify this if you want to support PUT requests
 
 In myapp/urls.py::
 
@@ -41,6 +39,44 @@ If you want to run the djangbone tests, you'll need to add `"djangobone"` to you
 INSTALLED_APPS, and run `python manage.py test djangbone`. The tests use
 `django.contrib.auth`, so that app will also need to be in your INSTALLED_APPS
 for the tests to work.
+
+
+Handling POST and PUT requests
+------------------------------
+
+Backbone.sync uses POST requests when new objects are created, and PUT requests
+when objects are changed. If you want to support these HTTP methods, you need to
+specify which form classes to use for validation for each request type.
+
+To do this, give BackboneView should have ``add_form_class`` (POST) and
+``edit_form_class`` (PUT) attributes. Usually you'll want to use a ModelForm
+for both, but regardless, each form's save() method should return the model
+instance that was created or modified.
+
+Here's an example (assume AddWidgetForm and EditWidgetForm are both ModelForms)::
+
+    from djangbone.views import BackboneView
+    from myapp.models import Widget
+    from myapp.forms import AddWidgetForm, EditWidgetForm
+
+    class WidgetView(BackboneView):
+        base_queryset = ...
+        serialize_fields = ...
+        add_form_class = AddWidgetForm      # Used for POST requests
+        edit_form_class = EditWidgetForm    # Used for PUT requests
+
+If you need access to the ``request`` object in your form classes (maybe to
+save ``request.user`` to your model, or perform extra validation), add
+a ``set_request()`` method to your form classes as follows::
+
+    class AddWidgetForm(ModelForm):
+        class Meta:
+            model = Widget
+
+        def set_request(self, request):
+            self.request = request
+
+        # Now you have access to self.request in clean() and save()
 
 
 Customization

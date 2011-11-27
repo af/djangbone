@@ -16,6 +16,13 @@ class AddUserForm(forms.ModelForm):
         model = User
         fields = ('username', 'first_name', 'last_name')
 
+    def set_request(self, request):
+        """
+        add_form_class and edit_form_class classes can optionally provide this
+        method in order to get access to the request object.
+        """
+        self.request = request
+
 class EditUserForm(forms.ModelForm):
     """
     Simple ModelForm for testing PUT requests.
@@ -23,6 +30,13 @@ class EditUserForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ('username', 'first_name', 'last_name')
+
+    def set_request(self, request):
+        """
+        add_form_class and edit_form_class classes can optionally provide this
+        method in order to get access to the request object.
+        """
+        self.request = request
 
 
 class ReadOnlyView(BackboneView):
