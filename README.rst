@@ -127,6 +127,30 @@ extra url parameter). You can also override dispatch() to do this, for example::
                 self.base_queryset = Widgets.objects.filter(owner=request.user)
             return super(WidgetView, self).dispatch(*args, **kwargs)
 
+
+A Note on CSRF Protection
+-------------------------
+
+Backbone.sync sends POST request data as JSON, which doesn't work so well with
+`Django's built-in CSRF middleware <https://docs.djangoproject.com/en/1.3/ref/contrib/csrf/>`_
+(the latter expects form-encoded POST data). As a result, if you're using the CSRF
+middleware, you'll want to either:
+
+#. Wrap your BackboneAPIView's dispatch method with the csrf_exempt decorator
+   to disable CSRF protection, or...
+#. (recommended) In javascript, configure jQuery's ajax method to always send
+   the ``X-CSRFToken`` HTTP header. See the `Django CSRF docs
+   <https://docs.djangoproject.com/en/1.3/ref/contrib/csrf/#ajax>`_ for one way
+   to do it, or if you have ``{% csrf_token %}`` somewhere in your Django
+   template you can use something like::
+
+       // Setup $.ajax to always send an X-CSRFToken header:
+       var csrfToken = $('input[name=csrfmiddlewaretoken]').val();
+       $(document).ajaxSend(function(e, xhr, settings) {
+           xhr.setRequestHeader('X-CSRFToken', csrfToken);
+       });
+
+
 Assumptions
 -----------
 
