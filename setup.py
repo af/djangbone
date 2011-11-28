@@ -1,10 +1,8 @@
-import os
 from setuptools import setup
 
 setup( name='djangbone',
-    version = '0.0.1',
+    version = '0.0.2',
     description = 'Makes it easy for Django backends to talk to Backbone.js.',
-    long_description = open(os.path.join(os.path.dirname(__file__), 'README.rst')).read(),
     url = 'https://github/af/djangbone',
 
     author = 'Aaron Franks',
