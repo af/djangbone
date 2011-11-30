@@ -151,12 +151,22 @@ middleware, you'll want to either:
        });
 
 
-Assumptions
------------
+Requirements
+------------
+
+Djangbone uses class-based views, and as such will only work with Django 1.3
+and above. Python 2.6+ is also recommended.
 
 Djangbone makes a few assumptions about your models in order to work:
 
-    * your model has an integer primary key named 'id'
+    * Your model has an integer primary key named 'id' (Django creates this
+      field by default).
+    * The model fields that you want to serialize can be serialized to JSON.
+      This isn't a problem for simple CharFields, IntegerFields, etc, but
+      more complex fields will not work by default. You can fix this by
+      pointing ``BackboneAPIView.json_encoder`` your own JSONEncoder class. See
+      the djangbone source for an example that adds support for Django's
+      DateTimeFields.
 
 
 Alternatives
