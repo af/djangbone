@@ -4,10 +4,10 @@ Djangbone
 
 Djangbone is a small django app that makes it easy to work with `Backbone.js
 <http://backbonejs.org/>`_ frontends. More specifically, it allows you to
-quickly build a backend that works with the default Backbone.sync implementation.
+quickly build a web API that works with the default Backbone.sync implementation.
 
-Djangbone provides one abstract class-based view (BackboneAPIView), which gives you
-hooks to customize it easily.
+Djangbone provides one abstract class-based view (BackboneAPIView), which has a
+bunch of hooks for customization.
 
 
 Example Usage
@@ -19,7 +19,7 @@ After downloading/installing djangbone, all you need to do is:
    ``serialize_fields`` attributes.
 #. Wire up the view subclass in your urlconf.
 
-In myapp/views.py::
+For example, in myapp/views.py::
 
     from myapp.models import Widget
     from djangbone.views import BackboneAPIView
@@ -56,8 +56,8 @@ Backbone.sync uses POST requests when new objects are created, and PUT requests
 when objects are changed. If you want to support these HTTP methods, you need to
 specify which form classes to use for validation for each request type.
 
-To do this, give BackboneAPIView should have ``add_form_class`` (POST) and
-``edit_form_class`` (PUT) attributes. Usually you'll want to use a ModelForm
+To do this, give your BackboneAPIView subclass ``add_form_class`` and
+``edit_form_class`` attributes. Usually you'll want to use a ModelForm
 for both, but regardless, each form's save() method should return the model
 instance that was created or modified.
 
@@ -155,29 +155,29 @@ Requirements
 ------------
 
 Djangbone uses class-based views, and as such will only work with Django 1.3
-and above. Python 2.6+ is also recommended.
+and above. Python 2.6+ is also required.
 
 Djangbone makes a few assumptions about your models in order to work:
 
     * Your model has an integer primary key named 'id' (Django creates this
       field by default).
-    * The model fields that you want to serialize can be serialized to JSON.
+    * The model fields in ``serialize_fields`` can be serialized to JSON.
       This isn't a problem for simple CharFields, IntegerFields, etc, but
       more complex fields will not work by default. You can fix this by
-      pointing ``BackboneAPIView.json_encoder`` your own JSONEncoder class. See
-      the djangbone source for an example that adds support for Django's
-      DateTimeFields.
+      overriding ``BackboneAPIView.json_encoder`` with your own JSONEncoder subclass.
+      See the djangbone source for an example of this, which adds support for
+      serializing ``datetime`` instances.
 
 
 Alternatives
 ------------
 
 Djangbone is designed to be a simple way to serialize your models to JSON in
-a way that works with Backbone. It's not trying to be a generalized, 
+a way that works with Backbone. It's not trying to be a generalized,
 format-agnostic API generator. If that's what you're looking for, you probably
 will want to go with something like django-tastypie or django-piston instead.
 
 If you're already using django-tastypie, or are looking for a more full-featured API
-backend than Djangbone provides, you may want to look at `backbone-tastypie 
+backend than Djangbone provides, you may want to look at `backbone-tastypie
 <https://github.com/PaulUithol/backbone-tastypie>`_, which overrides
 Backbone.sync (via javascript) in a way that works nicely with tastypie.
