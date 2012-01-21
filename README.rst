@@ -39,7 +39,7 @@ In myapp/urls.py::
 
     # Create url patterns for both "collections" and single items:
     urlpatterns = patterns('',
-        url(r'^widgets', WidgetView.as_view()),
+        url(r'^widgets$', WidgetView.as_view()),
         url(r'^widgets/(?P<id>\d+)', WidgetView.as_view()),
     )
 
