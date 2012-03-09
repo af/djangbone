@@ -1,4 +1,5 @@
 import datetime
+import decimal
 import json
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -17,6 +18,7 @@ class DjangboneJSONEncoder(json.JSONEncoder):
         Convert datetime objects to ISO-compatible strings during json serialization.
         """
         return obj.isoformat() if isinstance(obj, datetime.datetime) else None
+        return float(obj) if isinstance(obj, decimal.Decimal) else None
 
 
 class BackboneAPIView(View):
