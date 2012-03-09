@@ -10,15 +10,19 @@ from django.views.generic import View
 class DjangboneJSONEncoder(json.JSONEncoder):
     """
     JSON encoder that converts additional Python types to JSON.
-
-    Currently only datetime.datetime instances are supported.
     """
     def default(self, obj):
         """
-        Convert datetime objects to ISO-compatible strings during json serialization.
+        Converts datetime objects to ISO-compatible strings during json serialization.
+        Converts Decimal objects to floats during json serialization.
         """
-        return obj.isoformat() if isinstance(obj, datetime.datetime) else None
-        return float(obj) if isinstance(obj, decimal.Decimal) else None
+        if isinstance(obj, datetime.datetime):
+            return obj.isoformat()
+        elif isinstance(obj, decimal.Decimal):
+            return float(obj)
+        else:
+            return None
+
 
 
 class BackboneAPIView(View):
