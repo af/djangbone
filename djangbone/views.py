@@ -163,7 +163,6 @@ class BackboneAPIView(View):
             # by slicing the first item:
             json_output = self.json_encoder.encode(values[0])
         else:
-            values = queryset.values(*self.serialize_fields)
             # Process pagination options if they are enabled:
             if isinstance(self.page_size, int):
                 try:
