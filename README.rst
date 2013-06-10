@@ -43,7 +43,7 @@ In myapp/urls.py::
         url(r'^widgets/(?P<id>\d+)', WidgetView.as_view()),
     )
 
-If you want to run the djangbone tests, you'll need to add ``"djangobone"`` to your
+If you want to run the djangbone tests, you'll need to add ``"djangbone"`` to your
 INSTALLED_APPS, and run ``python manage.py test djangbone``. The tests use
 ``django.contrib.auth``, so that app will also need to be in your INSTALLED_APPS
 for the tests to work.
